@@ -2,16 +2,8 @@
 
 This Resilient Function package can be used to execute a Cisco Umbrella Investigate query from a workflow using the Functions feature of the Resilient
 Circuits integration framework.
-## Release Notes
-<!--
-  Specify all changes in this release. Do not remove the release 
-  notes of a previous release
--->
-### v1.0.1 - August 2019
-* Configuration settings checking less restrictive.
-### v1.0.0 - June 2018
-* Original release.
-## Prerequisites:
+
+Prerequisites:
 ```
 resilient version 30 or later
 resilient_circuits version 30 or later

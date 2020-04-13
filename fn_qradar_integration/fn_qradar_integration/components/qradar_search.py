@@ -53,11 +53,8 @@ class FunctionComponent(ResilientComponent):
                 qradar_verify_cert = False
 
             timeout = None
-            try:
-                if "search_timeout" in self.options:
-                    timeout = float(self.options["search_timeout"])
-            except:
-                log.debug("Failed to read search_timeout: {}".format(self.options["search_timeout"]))
+            if "search_timeout" in self.options:
+                timeout = self.options["search_timeout"]
 
             log.debug("Connection to {} using {}".format(self.options["host"], self.options["username"]))
 

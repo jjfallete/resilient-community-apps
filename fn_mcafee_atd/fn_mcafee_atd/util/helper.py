@@ -89,8 +89,7 @@ def _get_atd_session_headers(g):
         "VE-SDK-API": base64_login
     }
     r = requests.get(session_url, headers=headers, verify=g.trust_cert)
-    try:
-        check_status_code(r)
+    check_status_code(r)
     log.debug("User logged in successfully")
     content = r.json()
     session_string = "{}:{}".format(content["results"]["session"], content["results"]["userId"])
@@ -138,10 +137,7 @@ def _file_upload(g, submit_type, f=None, file_name=None, url=""):
 
 
 def check_status_code(response):
-    log.debug(response.content)
     if response.status_code > 299 or response.status_code < 200:
-        if response.status_code == 401:
-            log.error("Request refused, consider McAfee latency")
         raise ValueError("Request not successful. Status code: {}".format(str(response.status_code)))
 
 
@@ -219,7 +215,6 @@ def check_task_status(g, taskId):
     try:
         status_url = "{}/php/samplestatus.php?iTaskId={}".format(g.atd_url, taskId)
         submission_status = requests.get(status_url, headers=headers, verify=g.trust_cert)
-        log.debug(submission_status.content)
         check_status_code(submission_status)
         submit_json = submission_status.json()
         if submit_json['results']['istate'] == 4:
@@ -235,7 +230,6 @@ def check_task_status(g, taskId):
             jobid_url = "{}/php/samplestatus.php?jobId={}".format(g.atd_url, job_id)
             res = requests.get(jobid_url, headers=headers, verify=g.trust_cert)
             res_json = res.json()
-            log.debug("Task istate = 1, response is: {}".format(res_json))
             severity = res_json.get("severity")
             if severity < 0:
                 log.error("Severity is {}".format(str(severity)))
@@ -249,7 +243,6 @@ def check_task_status(g, taskId):
             jobid_url = "{}/php/samplestatus.php?jobId={}".format(g.atd_url, job_id)
             res = requests.get(jobid_url, headers=headers, verify=g.trust_cert)
             res_json = res.json()
-            log.debug("Task istate = 2, response is: {}".format(res_json))
             severity = res_json.get("severity")
             if severity < 0:
                 log.error("Severity is {}".format(str(severity)))
@@ -273,21 +266,15 @@ def get_atd_report(g, taskId, report_type, report_file):
         response = requests.get(report_url, headers=headers, verify=g.trust_cert)
         check_status_code(response)
 
-        content = response.content
-
-        # Check if task does not have a report associated with it
-        # Check for bytes, if not then check with string
-        if isinstance(content, bytes):
-            if b'Description: File type not supported' in content or \
-                    b'Description: Report not available' in content:
-                log.debug(content)
-                log.info("No report available")
-                return False
+        # Convert content to bytes if needed
+        if type(response.content) is bytes:
+            byte_content = response.content
         else:
-            if "Description: File type not supported" in content or \
-                    "Description: Report not available" in content:
-                log.debug(content)
-                return False
+            byte_content = str.encode(response.content)
+
+        # Task does not have a report associated with it
+        if b'Description: File type not supported' in byte_content:
+            return False
 
         with open(report_file.get("report_file"), 'wb') as f:
             f.write(response.content)
@@ -298,20 +285,15 @@ def get_atd_report(g, taskId, report_type, report_file):
     check_status_code(json_response)
     atd_logout(g.atd_url, headers, g.trust_cert)
 
-    json_content = json_response.content
-
-    # Check if task does not have a report associated with it
-    # Check for bytes, if not then check with string
-    if isinstance(json_content, bytes):
-        if b'Description: File type not supported' in json_content or \
-                b'Description: Report not available' in json_content:
-            log.debug(json_content)
-            return False
+    # Convert content to bytes if needed
+    if type(json_response.content) is bytes:
+        json_byte_content = json_response.content
     else:
-        if "Description: File type not supported" in json_content or \
-                "Description: Report not available" in json_content:
-            log.debug(json_content)
-            return False
+        json_byte_content = str.encode(json_response.content)
+
+    # Task does not have a report associated with it
+    if b'Description: File type not supported' in json_byte_content:
+        return False
 
     return json_response.json()
 

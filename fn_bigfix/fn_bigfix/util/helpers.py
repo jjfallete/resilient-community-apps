@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# (c) Copyright IBM Corp. 2010, 2019. All Rights Reserved.
+# pragma pylint: disable=unused-argument, no-self-use
+
+# (c) Copyright IBM Corp. 2010, 2018. All Rights Reserved.
 
 """ Helper functions for Resilient circuits Functions supporting Bigfix integration """
 
@@ -28,14 +30,12 @@ def validate_opts(func):
         raise Exception("Mandatory config setting 'bigfix_user' not set.")
     if not "bigfix_pass" in func.options or len(func.options["bigfix_pass"]) == 0:
         raise Exception("Mandatory config setting 'bigfix_pass' not set.")
-    if not "bigfix_hunt_results_limit" in func.options or len(func.options["bigfix_hunt_results_limit"]) == 0:
-        raise Exception("Mandatory config setting 'bigfix_hunt_results_limit' not set.")
+    if not "hunt_results_limit" in func.options or len(func.options["hunt_results_limit"]) == 0:
+        raise Exception("Mandatory config setting 'hunt_results_limit' not set.")
     if not "bigfix_polling_interval" in func.options or len(func.options["bigfix_polling_interval"]) == 0:
         raise Exception("Mandatory config setting 'bigfix_polling_interval' not set.")
     if not "bigfix_polling_timeout" in func.options or len(func.options["bigfix_polling_timeout"]) == 0:
         raise Exception("Mandatory config setting 'bigfix_polling_timeout' not set.")
-    if not "bigfix_endpoints_wait" in func.options or len(func.options["bigfix_endpoints_wait"]) == 0:
-        raise Exception("Mandatory config setting 'bigfix_endpoints_wait' not set.")
 
 def validate_params(params, func_name):
     """"Check parameter fields for Resilient Function and validate that they are in correct format.
@@ -103,18 +103,15 @@ def create_attachment(rest_client, file_name, file_content, params):
     :return att_report: Return result (dict) of Resilient post attachment request
     """
 
-    if sys.version_info.major < 3:
-        temp_file_obj = tempfile.NamedTemporaryFile('w+b', delete=False)
-    else:
+    if sys.version_info.major == 3:
         temp_file_obj = tempfile.NamedTemporaryFile('w', delete=False, encoding="utf8")
+    else:
+        temp_file_obj = tempfile.NamedTemporaryFile('w+b', delete=False)
 
     # Create the temporary file save results in json format.
     with temp_file_obj as temp_file:
-        if sys.version_info.major < 3:
-            temp_file.write(file_content.encode('utf-8'))
-        else:
-            temp_file.write(file_content)
-        temp_file.flush()
+        json.dump(file_content, temp_file)
+        temp_file.close()
         try:
             # Post file to Resilient
             att_report = rest_client.post_attachment("/incidents/{0}/attachments".format(params["incident_id"]),
